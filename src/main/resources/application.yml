@@ -1,0 +1,27 @@
+server:
+  port: 8080
+  tomcat:
+    uri-encoding: utf-8
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://192.168.0.131:3306/xiaoxin-dev?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC&useSSL=false
+    username: root
+    password: 123456
+
+
+mybatis:
+  type-aliases-package: com.xiaoxin.pojo
+
+pagehelper:
+  helper-dialect: mysql
+  support-methods-arguments: true
+
+fdfs:
+  tracker-list:
+    - 192.168.0.131:22122
+  thumb-image:
+    height: 80
+    width: 80
+  so-timeout: 1501
+  connect-timeout: 601
