@@ -41,6 +41,9 @@ public class Users implements Serializable{
   	@Column(name = "cid")
 	private String cid;
 
+	@Column(name = "email")
+	private String email;
+
 	public String getId() {
 		return id;
 	}
@@ -103,6 +106,14 @@ public class Users implements Serializable{
 
 	public void setCid(String cid) {
 		this.cid = cid;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
 	}
 
 	@Override

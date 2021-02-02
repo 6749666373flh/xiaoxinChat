@@ -31,7 +31,7 @@ public class ChatHandler extends SimpleChannelInboundHandler<TextWebSocketFrame>
 
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
-        System.out.println(ctx.channel().id().asLongText());
+//        System.out.println(ctx.channel().id().asLongText());
         users.remove(ctx.channel());
     }
 

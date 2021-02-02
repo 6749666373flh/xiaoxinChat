@@ -8,6 +8,11 @@ spring:
     url: jdbc:mysql://192.168.0.131:3306/xiaoxin-dev?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC&useSSL=false
     username: root
     password: 123456
+  redis:
+    host: 192.168.0.131
+    password:
+    port: 6379
+
 
 
 mybatis:
@@ -25,3 +30,5 @@ fdfs:
     width: 80
   so-timeout: 1501
   connect-timeout: 601
+
+

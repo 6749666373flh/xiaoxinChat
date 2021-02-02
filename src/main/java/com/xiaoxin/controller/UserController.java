@@ -19,10 +19,17 @@ import com.xiaoxin.utils.MyJSONResult;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.support.atomic.RedisAtomicInteger;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("user")
@@ -34,12 +41,28 @@ public class UserController {
     @Autowired
     private FastDFSClient fastDFSClient;
 
+    @Autowired
+    private StringRedisTemplate redisTemplate;
+
+    /**
+     * 时间间隔（分钟）
+     */
+    private static final int TIME_INTERVAL = 1;
+    /**
+     * 登录失败重试次数上限
+     */
+    private static final int FAILED_RETRY_TIMES = 5;
+    /**
+     * redis记录用户登录失败次数key
+     */
+    private static final String USER_LOGIN_FAILED_COUNT = "USER:LOGIN:FAILED:COUNT:";
+
     /**
     * @Description: 注册或登录
     * @date: 2021/1/27 21:35
     */
-    @PostMapping("/registerOrLogin")
-    public MyJSONResult registerOrLogin(@RequestBody Users user) throws Exception {
+    @PostMapping("/login")
+    public MyJSONResult login(@RequestBody Users user, HttpServletRequest request) throws Exception {
 
         if (StringUtils.isBlank(user.getUsername()) || StringUtils.isBlank(user.getPassword())) {
             return MyJSONResult.errorMap("用户名或密码不能为空");
@@ -48,12 +71,47 @@ public class UserController {
                 user.getPassword().length() > 12 || user.getPassword().length() < 6) {
             return MyJSONResult.errorMsg("用户名和密码长度请在6-12之间");
         }
+
+        String key = USER_LOGIN_FAILED_COUNT + request.getRemoteHost()+":"+request.getRemotePort();
+        RedisAtomicInteger redisCounter = getRedisCounter(key);
+        if(redisCounter.get() >= FAILED_RETRY_TIMES) return MyJSONResult.errorMsg("登录失败次数过多,锁定一分钟");
+
+        Users userResult = userService.queryUserForLogin(user.getUsername(), MD5Utils.getMD5Str(user.getPassword()));
+        if(userResult == null) {
+            redisCounter.incrementAndGet();
+            return MyJSONResult.errorMsg("用户或密码不正确");
+        }
+
+        UsersVO usersVO = new UsersVO();
+        BeanUtils.copyProperties(userResult,usersVO);
+        return MyJSONResult.ok(usersVO);
+    }
+
+    @PostMapping("/register")
+    public MyJSONResult register(@RequestBody Users user) throws Exception {
+
+        if (StringUtils.isBlank(user.getUsername()) || StringUtils.isBlank(user.getPassword()) || StringUtils.isBlank(user.getEmail())) {
+            return MyJSONResult.errorMap("用户名或密码不能为空");
+        }
+        if (user.getUsername().length() > 12 || user.getUsername().length() < 6 ||
+                user.getPassword().length() > 12 || user.getPassword().length() < 6) {
+            return MyJSONResult.errorMsg("用户名和密码长度请在6-12之间");
+        }
+        // 规则
+        String regEx = "^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)+$";
+        // 编译正则表达式
+        Pattern pattern = Pattern.compile(regEx);
+        // 忽略大小写的写法
+        // Pattern pat = Pattern.compile(regEx, Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(user.getEmail());
+        // 字符串是否与正则表达式相匹配
+        boolean rs = matcher.matches();
+        if(!rs) return MyJSONResult.errorMsg("邮箱格式不正确");
+
         boolean userIsExist = userService.queryUserNameIsExist(user.getUsername());
         Users userResult = null;
         if (userIsExist) {
-            // 登录
-            userResult = userService.queryUserForLogin(user.getUsername(), MD5Utils.getMD5Str(user.getPassword()));
-            if(userResult == null) return MyJSONResult.errorMsg("用户或密码不正确");
+            return MyJSONResult.errorMsg("用户名已存在");
         }else{
             // 注册
             userResult = userService.saveUser(user);
@@ -62,7 +120,21 @@ public class UserController {
         BeanUtils.copyProperties(userResult,usersVO);
         return MyJSONResult.ok(usersVO);
     }
-
+    /**
+     * 根据key获取计数器
+     *
+     * @param key key
+     * @return
+     */
+    private RedisAtomicInteger getRedisCounter(String key) {
+        RedisAtomicInteger counter =
+                new RedisAtomicInteger(key, redisTemplate.getConnectionFactory());
+        if (counter.get() == 0) {
+            // 设置过期时间
+            counter.expire(TIME_INTERVAL, TimeUnit.MINUTES);
+        }
+        return counter;
+    }
     /**
     * @Description: 上传头像
     * @date: 2021/1/27 21:35
