@@ -1,6 +1,7 @@
 package com.xiaoxin.controller;
 
 
+import com.xiaoxin.aop.LoginTrack;
 import com.xiaoxin.enums.OperatorFriendRequestTypeEnum;
 import com.xiaoxin.enums.SearchFriendsStatusEnum;
 import com.xiaoxin.mapper.MyFriendsMapper;
@@ -44,24 +45,13 @@ public class UserController {
     @Autowired
     private StringRedisTemplate redisTemplate;
 
-    /**
-     * 时间间隔（分钟）
-     */
-    private static final int TIME_INTERVAL = 1;
-    /**
-     * 登录失败重试次数上限
-     */
-    private static final int FAILED_RETRY_TIMES = 5;
-    /**
-     * redis记录用户登录失败次数key
-     */
-    private static final String USER_LOGIN_FAILED_COUNT = "USER:LOGIN:FAILED:COUNT:";
 
     /**
     * @Description: 注册或登录
     * @date: 2021/1/27 21:35
     */
     @PostMapping("/login")
+    @LoginTrack(count = 5)
     public MyJSONResult login(@RequestBody Users user, HttpServletRequest request) throws Exception {
 
         if (StringUtils.isBlank(user.getUsername()) || StringUtils.isBlank(user.getPassword())) {
@@ -72,13 +62,10 @@ public class UserController {
             return MyJSONResult.errorMsg("用户名和密码长度请在6-12之间");
         }
 
-        String key = USER_LOGIN_FAILED_COUNT + request.getRemoteHost()+":"+request.getRemotePort();
-        RedisAtomicInteger redisCounter = getRedisCounter(key);
-        if(redisCounter.get() >= FAILED_RETRY_TIMES) return MyJSONResult.errorMsg("登录失败次数过多,锁定一分钟");
 
         Users userResult = userService.queryUserForLogin(user.getUsername(), MD5Utils.getMD5Str(user.getPassword()));
         if(userResult == null) {
-            redisCounter.incrementAndGet();
+
             return MyJSONResult.errorMsg("用户或密码不正确");
         }
 
@@ -88,6 +75,7 @@ public class UserController {
     }
 
     @PostMapping("/register")
+    @LoginTrack(count = 5)
     public MyJSONResult register(@RequestBody Users user) throws Exception {
 
         if (StringUtils.isBlank(user.getUsername()) || StringUtils.isBlank(user.getPassword()) || StringUtils.isBlank(user.getEmail())) {
@@ -120,21 +108,7 @@ public class UserController {
         BeanUtils.copyProperties(userResult,usersVO);
         return MyJSONResult.ok(usersVO);
     }
-    /**
-     * 根据key获取计数器
-     *
-     * @param key key
-     * @return
-     */
-    private RedisAtomicInteger getRedisCounter(String key) {
-        RedisAtomicInteger counter =
-                new RedisAtomicInteger(key, redisTemplate.getConnectionFactory());
-        if (counter.get() == 0) {
-            // 设置过期时间
-            counter.expire(TIME_INTERVAL, TimeUnit.MINUTES);
-        }
-        return counter;
-    }
+
     /**
     * @Description: 上传头像
     * @date: 2021/1/27 21:35
