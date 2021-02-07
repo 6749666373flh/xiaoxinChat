@@ -2,11 +2,9 @@ package com.xiaoxin.aop;
 
 
 import com.xiaoxin.utils.MyJSONResult;
-import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -42,7 +40,7 @@ public class LoginAspectController {
         if(count == 1) redisTemplate.expire(key, loginTrack.time(), TimeUnit.SECONDS);
 
         if (count > loginTrack.count()) {
-            return MyJSONResult.errorMsg("访问次数过于频繁,锁定一分钟");
+            return MyJSONResult.errorMsg("访问次数过于频繁,锁定"+loginTrack.time()/60+"分钟");
         }else{
             return pjp.proceed();
         }

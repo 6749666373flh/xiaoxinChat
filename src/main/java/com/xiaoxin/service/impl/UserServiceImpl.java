@@ -20,6 +20,7 @@ import com.xiaoxin.service.UserService;
 import com.xiaoxin.utils.*;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +30,7 @@ import tk.mybatis.mapper.entity.Example;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 
 @Service
@@ -56,6 +58,8 @@ public class UserServiceImpl implements UserService {
     private FastDFSClient fastDFSClient;
 
 
+
+
     @Override
     public boolean queryUserNameIsExist(String userName) {
 
@@ -65,15 +69,17 @@ public class UserServiceImpl implements UserService {
         return userResult != null;
     }
 
-
+    @Transactional
     @Override
     public Users queryUserForLogin(String userName, String passWord) {
         Example example = new Example(Users.class);
         Example.Criteria criteria = example.createCriteria();
         criteria.andEqualTo("username", userName);
         criteria.andEqualTo("password", passWord);
+        Users user = userMapper.selectOneByExample(example);
 
-        return userMapper.selectOneByExample(example);
+
+        return user;
     }
 
     @Transactional(propagation = Propagation.REQUIRED)

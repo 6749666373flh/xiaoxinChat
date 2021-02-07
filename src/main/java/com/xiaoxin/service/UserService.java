@@ -13,7 +13,7 @@ public interface UserService {
     // 查询用户是否存在
     public boolean queryUserNameIsExist(String userName);
 
-    // 查询是否登录
+    // 查询是否能登录
     public Users queryUserForLogin(String userName, String passWord);
 
     // 根据用户名查询

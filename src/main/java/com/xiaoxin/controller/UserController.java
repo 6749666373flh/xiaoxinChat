@@ -13,10 +13,7 @@ import com.xiaoxin.pojo.vo.FriendRequestVO;
 import com.xiaoxin.pojo.vo.MyFriendsVO;
 import com.xiaoxin.pojo.vo.UsersVO;
 import com.xiaoxin.service.UserService;
-import com.xiaoxin.utils.FastDFSClient;
-import com.xiaoxin.utils.FileUtils;
-import com.xiaoxin.utils.MD5Utils;
-import com.xiaoxin.utils.MyJSONResult;
+import com.xiaoxin.utils.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -43,7 +41,7 @@ public class UserController {
     private FastDFSClient fastDFSClient;
 
     @Autowired
-    private StringRedisTemplate redisTemplate;
+    private StringRedisTemplate stringRedisTemplate;
 
 
     /**
@@ -52,7 +50,7 @@ public class UserController {
     */
     @PostMapping("/login")
     @LoginTrack(count = 5)
-    public MyJSONResult login(@RequestBody Users user, HttpServletRequest request) throws Exception {
+    public MyJSONResult login(@RequestBody Users user) throws Exception {
 
         if (StringUtils.isBlank(user.getUsername()) || StringUtils.isBlank(user.getPassword())) {
             return MyJSONResult.errorMap("用户名或密码不能为空");
@@ -62,15 +60,22 @@ public class UserController {
             return MyJSONResult.errorMsg("用户名和密码长度请在6-12之间");
         }
 
-
         Users userResult = userService.queryUserForLogin(user.getUsername(), MD5Utils.getMD5Str(user.getPassword()));
         if(userResult == null) {
 
             return MyJSONResult.errorMsg("用户或密码不正确");
         }
 
+        String token = null;
+        if (userResult != null) {
+            token = JwtTokenUtils.createToken(user.getUsername());
+            // 存入redis中
+            stringRedisTemplate.opsForValue().set(user.getUsername(),token,JwtTokenUtils.EXPIRATION, TimeUnit.SECONDS);
+        }
+        System.out.println(token);
         UsersVO usersVO = new UsersVO();
         BeanUtils.copyProperties(userResult,usersVO);
+        usersVO.setToken(token);
         return MyJSONResult.ok(usersVO);
     }
 
@@ -104,8 +109,16 @@ public class UserController {
             // 注册
             userResult = userService.saveUser(user);
         }
+
+        String token = null;
+        if (userResult != null) {
+            token = JwtTokenUtils.createToken(user.getUsername());
+            // 存入redis中
+            stringRedisTemplate.opsForValue().set(user.getUsername(),token,JwtTokenUtils.EXPIRATION, TimeUnit.SECONDS);
+        }
         UsersVO usersVO = new UsersVO();
         BeanUtils.copyProperties(userResult,usersVO);
+        usersVO.setToken(token);
         return MyJSONResult.ok(usersVO);
     }
 
