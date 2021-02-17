@@ -5,6 +5,7 @@ import com.xiaoxin.utils.MyJSONResult;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -26,8 +27,25 @@ public class LoginAspectController {
     public void access() {
     }
 
+    @Around("access()")
+    public Object doBefore(ProceedingJoinPoint pjp) throws Throwable {
+        ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        HttpServletRequest request = requestAttributes.getRequest();
+
+        Object[] args = pjp.getArgs();
+
+        Long count = redisTemplate.opsForValue().increment(args[0],1);
+
+        if(count > 1){
+            return MyJSONResult.errorMsg("超过最大登录次数");
+        }else{
+            return pjp.proceed();
+        }
+
+    }
+
     @Around("access() && @annotation(loginTrack)")
-    public Object doBefore(ProceedingJoinPoint pjp, LoginTrack loginTrack) throws Throwable {
+    public Object doAround(ProceedingJoinPoint pjp, LoginTrack loginTrack) throws Throwable {
 
         ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         HttpServletRequest request = requestAttributes.getRequest();

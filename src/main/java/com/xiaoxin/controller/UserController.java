@@ -15,6 +15,7 @@ import com.xiaoxin.pojo.vo.UsersVO;
 import com.xiaoxin.service.UserService;
 import com.xiaoxin.utils.*;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -45,7 +46,7 @@ public class UserController {
 
 
     /**
-    * @Description: 注册或登录
+    * @Description: 登录
     * @date: 2021/1/27 21:35
     */
     @PostMapping("/login")
@@ -120,6 +121,25 @@ public class UserController {
         BeanUtils.copyProperties(userResult,usersVO);
         usersVO.setToken(token);
         return MyJSONResult.ok(usersVO);
+    }
+
+    /**
+     * @Description: 登出
+     * @date: 2021/1/27 21:35
+     */
+    @PostMapping("/logOut")
+    @LoginTrack(count = 5)
+    public MyJSONResult logOut(@RequestParam String userId) throws Exception {
+
+        if (StringUtils.isBlank(userId)) {
+            return MyJSONResult.errorMap("id为空");
+        }
+        Boolean deleteRes = stringRedisTemplate.delete(userId);
+
+        if(deleteRes) {
+            return MyJSONResult.ok("登出成功");
+        }
+        return MyJSONResult.errorMsg("登出失败");
     }
 
     /**
