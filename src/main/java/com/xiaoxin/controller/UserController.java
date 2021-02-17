@@ -21,6 +21,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.support.atomic.RedisAtomicInteger;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServlet;
@@ -128,13 +130,18 @@ public class UserController {
      * @date: 2021/1/27 21:35
      */
     @PostMapping("/logOut")
-    @LoginTrack(count = 5)
-    public MyJSONResult logOut(@RequestParam String userId) throws Exception {
+    public MyJSONResult logOut(@RequestBody Users user) throws Exception {
 
-        if (StringUtils.isBlank(userId)) {
-            return MyJSONResult.errorMap("id为空");
+        if (StringUtils.isBlank(user.getUsername())) {
+            return MyJSONResult.errorMap("username为空");
         }
-        Boolean deleteRes = stringRedisTemplate.delete(userId);
+        ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        HttpServletRequest request = requestAttributes.getRequest();
+        String remoteHost = request.getRemoteHost();
+
+        String key = user.getUsername() + remoteHost;
+
+        Boolean deleteRes = stringRedisTemplate.delete(key);
 
         if(deleteRes) {
             return MyJSONResult.ok("登出成功");

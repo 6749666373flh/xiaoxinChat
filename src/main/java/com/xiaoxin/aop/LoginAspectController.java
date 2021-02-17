@@ -1,6 +1,7 @@
 package com.xiaoxin.aop;
 
 
+import com.xiaoxin.pojo.Users;
 import com.xiaoxin.utils.MyJSONResult;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -14,6 +15,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -31,10 +33,13 @@ public class LoginAspectController {
     public Object doBefore(ProceedingJoinPoint pjp) throws Throwable {
         ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         HttpServletRequest request = requestAttributes.getRequest();
+        String remoteHost = request.getRemoteHost();
 
         Object[] args = pjp.getArgs();
+        Arrays.stream(args).forEach(System.out::println);
+        String key = ((Users)args[0]).getUsername()+remoteHost;
 
-        Long count = redisTemplate.opsForValue().increment(args[0],1);
+        Long count = redisTemplate.opsForValue().increment(key,1);
 
         if(count > 1){
             return MyJSONResult.errorMsg("超过最大登录次数");
