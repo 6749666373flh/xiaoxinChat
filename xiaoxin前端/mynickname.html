@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="css/mui.css" rel="stylesheet" />
+		<link rel="stylesheet" type="text/css" href="css/header.css"/>
+		
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav title">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left" style="color: ghostwhite;"></a>
+			<a id = "link_submit_nickname" class="mui-icon mui-icon-right-nav mui-pull-right" style="color: ghostwhite; font-size: 16px; line-height: 26px;">提交</a>
+			<h1 class="mui-title title-color">设置昵称</h1>
+		</header>
+		
+		
+		<div class="mui-content">
+			<div class="mui-input-row">
+				<input id = "txt_nickname" type="text" class="mui-input-speech mui-input-clear" placeholder="修改昵称">
+			</div>
+			
+		</div>
+		
+	
+		<script src="js/mui.js"></script>
+		<script src="js/app.js"></script>
+		<script type="text/javascript">
+			mui.init()
+			mui.plusReady(function () {
+			    
+				var user = app.getUserGlobalInfo();
+				var mynickname = user.nickname;
+				
+				var txt_nickname = document.getElementById("txt_nickname");
+				txt_nickname.value = mynickname;
+				
+				// 提交昵称
+				var link_submit_nickname = document.getElementById("link_submit_nickname");
+				link_submit_nickname.addEventListener("tap",function(){
+					var newNickName = txt_nickname.value;
+					
+					plus.nativeUI.showWaiting("上传中...");
+					// 与后端联调
+					mui.ajax(app.serverUrl + "/user/setNickName",{
+						// var user = app.getUserGlobalInfo();
+						data:{
+							userId: app.getUserGlobalInfo().id,
+							nickname: newNickName
+						},
+						dataType:'json',//服务器返回json格式数据
+						type:'post',//HTTP请求类型
+						timeout:5000,//超时时间设置为10秒；
+						headers:{'Content-Type':'application/json'},	              
+						success:function(data){
+							//服务器返回响应，根据响应结果，分析是否登录成功；
+							//console.log(JSON.stringify(data));
+							if (data.status == 200) {
+								// 关闭等待框
+								plus.nativeUI.closeWaiting();
+								alert("修改成功");
+								
+								// 覆盖信息
+								app.setUserGlobalInfo(data.data);
+								// 刷新触发另一个webview自定义事件
+								var meWebView = plus.webview.getWebviewById("me.html");
+								// 刷新触发另一个webview自定义事件
+								var myFaceWebView = plus.webview.getWebviewById("myface.html");
+								mui.fire(meWebView, "refresh");
+								mui.fire(myFaceWebView, "refresh");
+								// 页面跳转
+								mui.openWindow("index.html", "index.html");
+							} else {
+								plus.nativeUI.closeWaiting();
+								alert(data.msg);
+								app.showToast(data.msg, "error");
+							}
+						}
+					});
+					
+				});
+				
+				
+			})
+			
+		
+		</script>
+	</body>
+
+</html>

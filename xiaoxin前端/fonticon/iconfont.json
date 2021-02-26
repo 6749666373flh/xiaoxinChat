@@ -1,0 +1,72 @@
+{
+  "id": "2346384",
+  "name": "小信",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "18939012",
+      "name": "导航",
+      "font_class": "daohang",
+      "unicode": "e620",
+      "unicode_decimal": 58912
+    },
+    {
+      "icon_id": "18939013",
+      "name": "图片",
+      "font_class": "tupian",
+      "unicode": "e621",
+      "unicode_decimal": 58913
+    },
+    {
+      "icon_id": "18939015",
+      "name": "视频",
+      "font_class": "shipin",
+      "unicode": "e622",
+      "unicode_decimal": 58914
+    },
+    {
+      "icon_id": "18939021",
+      "name": "刷新",
+      "font_class": "shuaxin",
+      "unicode": "e623",
+      "unicode_decimal": 58915
+    },
+    {
+      "icon_id": "18939022",
+      "name": "首页",
+      "font_class": "shouye",
+      "unicode": "e624",
+      "unicode_decimal": 58916
+    },
+    {
+      "icon_id": "18939023",
+      "name": "搜索",
+      "font_class": "sousuo",
+      "unicode": "e625",
+      "unicode_decimal": 58917
+    },
+    {
+      "icon_id": "18939024",
+      "name": "我的",
+      "font_class": "wode",
+      "unicode": "e626",
+      "unicode_decimal": 58918
+    },
+    {
+      "icon_id": "18939028",
+      "name": "消息",
+      "font_class": "xiaoxi",
+      "unicode": "e627",
+      "unicode_decimal": 58919
+    },
+    {
+      "icon_id": "18939032",
+      "name": "榜单",
+      "font_class": "bangdan",
+      "unicode": "e628",
+      "unicode_decimal": 58920
+    }
+  ]
+}

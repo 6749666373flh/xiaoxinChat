@@ -1,0 +1,15 @@
+
+
+.title{
+	background-color: lightgreen;
+}
+
+.title-color{
+	color: white;
+}
+
+.mui-bar-tab .mui-tab-item.mui-active {
+	color: lightgreen;
+}
+
+*{touch-action: none;}

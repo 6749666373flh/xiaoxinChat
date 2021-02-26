@@ -1,0 +1,97 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="css/mui.css" rel="stylesheet" />
+		<link rel="stylesheet" type="text/css" href="css/header.css"/>
+		<style>
+			
+			
+			#scan_component{
+				width: 100%;
+				top: 44px;
+				bottom: 0rem;
+				position: absolute;
+				text-align: center;
+				background-color: #000000;
+			}
+			
+		</style>
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav title">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left" style="color: ghostwhite;"></a>
+			<h1 class="mui-title title-color">扫一扫</h1>
+		</header>
+		
+		<div id="scan_component"></div>
+		
+		
+		
+		<script src="js/mui.js"></script>
+		<script src="js/app.js"></script>
+		<script type="text/javascript">
+			mui.init()
+			mui.plusReady(function () {
+			    
+				//startScan();
+				setTimeout("startScan()","500");
+				
+			})
+			var scan;
+			function startScan(){
+				var styles = {
+					frameColor: "#2AC845",
+					scannbarColor: "#007AFF",
+					background:""
+				}
+				scan = new plus.barcode.Barcode("scan_component", null, styles);
+				scan.onmarked = onmarked;
+				scan.start();
+			}
+			
+			
+			// 扫码成功回调
+			function onmarked(type, result) {
+				
+				//alert( type+result );
+				if(type == 0){
+					
+					plus.nativeUI.showWaiting("搜索中...");
+					// 与后端联调
+					mui.ajax(app.serverUrl + "/user/search?myUserId="+app.getUserGlobalInfo().id+
+												"&friendUserName="+result,{
+					
+						dataType:'json',//服务器返回json格式数据
+						type:'get',//HTTP请求类型
+						timeout:5000,//超时时间设置为10秒；
+						headers:{'Content-Type':'application/json'},	              
+						success:function(data){
+							//服务器返回响应，根据响应结果，分析是否登录成功；
+							//console.log(JSON.stringify(data));
+							if (data.status == 200) {
+								// 关闭等待框
+								plus.nativeUI.closeWaiting();
+								
+								// 页面跳转
+								mui.openWindow({url: "searchfrienddetail.html",id: "searchfrienddetail.html",
+												styles:{}, extras: {willBeFriend: data.data} });
+							} else {
+								plus.nativeUI.closeWaiting();
+								
+								app.showToast(data.msg, "error");
+								mui.back();
+							}
+						}
+					});
+					
+				}
+			}
+		</script>
+	</body>
+
+</html>

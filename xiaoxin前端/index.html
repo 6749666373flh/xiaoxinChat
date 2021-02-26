@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<script src="js/mui.min.js"></script>
+		<link href="css/mui.min.css" rel="stylesheet" />
+		<link rel="stylesheet" type="text/css" href="css/header.css" />
+		<link rel="stylesheet" type="text/css" href="fonticon/iconfont.css">
+
+		<script type="text/javascript" charset="utf-8">
+			mui.init();
+
+			mui.plusReady(function() {
+				plus.navigator.setStatusBarBackground("black");
+				plus.navigator.setStatusBarStyle("light");
+			})
+		</script>
+	</head>
+	<body>
+		<header class="mui-bar mui-bar-nav title">
+			<h1 class="mui-title title-color" id="xiaoxin_title"><b>小信</b></h1>
+		</header>
+
+		<svg class="icon" aria-hidden="true">
+			<use xlink:href="#icon-daohang"></use>
+		</svg>
+		<nav class="mui-bar mui-bar-tab">
+			<a class="mui-tab-item mui-active" tabindex="0">
+				<span class="mui-icon iconfont icon-xiaoxi" ></span>
+				<span class="mui-tab-label">聊天</span>
+			</a>
+			<a class="mui-tab-item" tabindex="1">
+				<span class="mui-icon iconfont icon-wode"></span>
+				<span class="mui-tab-label">通讯录</span>
+			</a>
+			<a class="mui-tab-item" tabindex="2">
+				<span class="mui-icon iconfont icon-daohang"></span>
+				<span class="mui-tab-label">发现</span>
+			</a>
+			<a class="mui-tab-item" tabindex="3">
+				<span class="mui-icon iconfont icon-shouye"></span>
+				<span class="mui-tab-label">我</span>
+			</a>
+		</nav>
+
+
+		<script type="text/javascript" charset="utf-8">
+			var xiaoxinArr = [{
+					pageId: "chatlist.html",
+					pageUrl: "chatlist.html"
+				},
+				{
+					pageId: "contact.html",
+					pageUrl: "contact.html"
+				},
+				{
+					pageId: "discovery.html",
+					pageUrl: "discovery.html"
+				},
+				{
+					pageId: "me.html",
+					pageUrl: "me.html"
+				}
+			];
+
+			var xiaoxinStyle = {
+				top: "44px",
+				bottom: "50px"
+			}
+			mui.plusReady(function() {
+				mui.back = function(){return false;}
+				// 监听网络
+				netChangeSwitch();
+				// 获取当前webview对象
+				var indexWebView = plus.webview.currentWebview();
+				// 向当前的主页webview追加子叶的4张webview对象
+				for (var i = 0; i < xiaoxinArr.length; i++) {
+					var xiaoxinPage = plus.webview.create(xiaoxinArr[i].pageUrl, xiaoxinArr[i].pageId, xiaoxinStyle);
+					// 隐藏webview窗口
+					xiaoxinPage.hide();
+					// 追加每一个子页面到当前主页面
+					indexWebView.append(xiaoxinPage);
+				}
+				plus.webview.show(xiaoxinArr[0].pageId);
+
+				// 批量绑定tap事件,展示不同的页面
+				mui(".mui-bar-tab").on("tap", "a", function() {
+					var tabindex = this.getAttribute("tabindex");
+					
+					// 显示点击的tab选项所对应的页面
+					plus.webview.show(xiaoxinArr[tabindex].pageId, "fade-in", 300);
+
+					// 隐藏其他的不需要的页面
+					for (var i = 0; i < xiaoxinArr.length; i++) {
+						if (i != tabindex) {
+							plus.webview.hide(xiaoxinArr[i].pageId, "fade-out", 300);
+						}
+					}
+				})
+				
+				setTimeout("initData()","500");
+			});
+			
+			// 监听网络状态更改
+			function netChangeSwitch(){
+				document.addEventListener("netchange", function(){
+					// 网络状态获取和判断
+					var connectionStatus = plus.networkinfo.getCurrentType();
+					if (connectionStatus != 0 && connectionStatus != 1) {
+						// 重新打开网络连接
+						var xiaoxin_title = document.getElementById("xiaoxin_title");
+						xiaoxin_title.innerHTML = "<b>小信</b>";
+					} else {
+						// 关闭网络连接
+						var xiaoxin_title = document.getElementById("xiaoxin_title");
+						xiaoxin_title.innerHTML = "<b>小信(未连接)</b>";
+					}
+				});
+			}
+			
+			function initData(){
+				var chatList = plus.webview.getWebviewById("chatlist.html");
+				var me = plus.webview.getWebviewById("me.html");
+				mui.fire(chatList, "refresh");
+				mui.fire(me, "refresh");
+			}
+		</script>
+	</body>
+</html>
